@@ -30,3 +30,22 @@ def parse_line(ser, filtered_data, raw_data, n_chan, i):
             #print(e)
 
         
+def set_up_line_plot(ax, N_full, n_chan, ylim):
+    dy = np.abs(np.diff(ylim))/n_chan
+    y_baseline = np.max(ylim) - dy/2 - dy * np.arange(n_chan)
+    lines = [
+        #ax.plot([], [], color = 'black', lw = 1)[0], # vertical line # can't get this to work
+        ax.plot([], [], color = 'red', lw = 2)[0], # infrasound
+        ax.plot([], [], color = 'lightblue', lw = 2)[0], # V
+        ax.plot([], [], color = 'blue', lw = 2)[0], # N
+        ax.plot([], [], color = 'darkblue', lw = 2)[0] # E
+    ]
+    ax.set_ylim(np.min(ylim), np.max(ylim))  # Set limitation in y
+    ax.set_xlim(0, N_full) # Set limitation in x
+    #dy = [5 * np.std(data[i]) for i in range(n_chan)]
+    text_offset = 0.15
+    labels = ['Infrasound', 'Vertical', 'North', 'East']
+    for i in range(n_chan):
+        ax.text(0, y_baseline[i] + text_offset, labels[i])
+
+    return lines, y_baseline

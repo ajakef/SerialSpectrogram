@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 import itertools
 import numpy as np
-from utils import parse_line, baud_rate
+from utils import parse_line, baud_rate, set_up_line_plot
 
 def data_gen_serial():
     try:
@@ -16,7 +16,7 @@ def data_gen_serial():
         except:
             print('Could not open either ttyUSB0 or ttyUSB1. Please confirm that pySerial is installed and device is plugged in')
     ser.reset_input_buffer()  # Flush input buffer, discarding all its contents.
-    for i in range(50):
+    for i in range(10):
         print(ser.readline())
 
     raw_data = np.zeros((n_chan, N_full))
@@ -33,25 +33,18 @@ def data_gen_no_serial():
         yield np.arange(N_sub) + np.random.normal(0, 1, N_sub)
         
 def run(data):
-    line1.set_data(xdata, data[0] - data[0][0])  # Creating a data set for hand-over to plot
-    if n_chan == 1:
-        return line1,
-    elif n_chan == 2:
-        line2.set_data(xdata, data[1] - data[1][0])
-        return line1, line2,
+    for i in range(n_chan):
+        lines[i].set_data(xdata, data[i] - np.median(data[i]) + y_baseline[i])  # Creating a data set for hand-over to plot
+    return lines[:n_chan]
     
 
 N_full = 1000
 N_sub = 50
-n_chan = 2
+n_chan = 4
+ylim = [-1, 1]
 if __name__ == '__main__':
     fig, ax = plt.subplots()  # Setup figure and axis
-    line1, = ax.plot([], [], color = 'red', lw = 2)  # Setup line
-    line2, = ax.plot([], [], color = 'blue', lw = 2)  # Setup line
-
-    ax.set_ylim(-1, 1)  # Set limitation in y
-    ax.set_xlim(0, N_full) # Set limitation in x
-
+    lines, y_baseline = set_up_line_plot(ax, N_full, n_chan, ylim)
     xdata, ydata = np.arange(N_full), np.zeros(N_sub)  # Create empty lists
     j = 0
     run_count = 0

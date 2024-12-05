@@ -7,7 +7,7 @@ import itertools
 import numpy as np
 from scipy.signal import spectrogram
 from riversound import image
-from utils import parse_line, baud_rate
+from utils import parse_line, baud_rate, set_up_line_plot
 
 sensitivity_infrasound = 0.01/125 * 3.2/12
 sensitivity_seismic = 30 # V/m/s; probably order-of-magnitude accurate.
@@ -19,9 +19,10 @@ bitweight_seismic = bitweight_V/gain_seismic/sensitivity_seismic * 1e3 # um/s
 
 N_full = 4096
 N_sub = 128
-n_chan = 2
+n_chan = 4
 overlap = 0.875
 dt = 0.005
+ylim = [-1, 1]
 
 show_infrasound = True
 show_seismic = True
@@ -50,12 +51,12 @@ def data_gen_serial(): # this function must be iterable; every time it yields, w
         for i in range(N_full):
             filtered_data, raw_data = parse_line(ser, filtered_data, raw_data, n_chan, i) 
             if (i % N_sub) == 0:
-                yield [filtered_data[0,:], filtered_data[1,:], i]
+                yield [filtered_data[j,:] for j in range(n_chan)] + [i]
         
 def run(data): # this function accepts the "yields" of the data_gen function as its input, and must return a list of all artists (i.e., images and lines). If some feature in the plot isn't updating right, it may not be included in the returned list. note that axis.plot() returns a list of (typically 1) artists, not an artist itself. Seems like storing info in globals isn't an option.
     artists = []
     nplots = show_seismic+show_infrasound+show_traces
-    current_time = data[2] * dt
+    current_time = data[-1] * dt
     freqticks = [1, 3, 10, 30, 100]
     if show_infrasound:
         plt.subplot(nplots, 1, 1)
@@ -75,12 +76,13 @@ def run(data): # this function accepts the "yields" of the data_gen function as 
         plt.subplot(nplots, 1, nplots)
         t = np.arange(N_full) * dt
         if show_infrasound:
-            line_infrasound.set_data(t, data[0] - data[0][0]+0.25)
-            artists.append(line_infrasound)
+            lines[0].set_data(t, data[0] - data[0][0]+y_baseline[0])
+            artists.append(lines[0])
         if show_seismic:
-            line_seismic.set_data(t, data[1] - data[1][0]-0.25)
-            artists.append(line_seismic)
-        axes[-1,0].set_ylim(-1, 1)
+            for i in range(1, n_chan):
+                lines[i].set_data(t, data[i] - data[i][0]+y_baseline[i])
+                artists.append(lines[i])
+        axes[-1,0].set_ylim(np.min(ylim), np.max(ylim))
         artists.append(axes[-1,0].plot([current_time, current_time], [-1,1], 'k-')[0])
     return artists
     
@@ -91,12 +93,13 @@ if __name__ == '__main__':
     if show_infrasound:
         axes[0,0].set_title('Infrasound')
     if show_seismic:
-        axes[0+show_infrasound,0].set_title('Seismic')
+        axes[0+show_infrasound,0].set_title('Vertical Seismic')
     if show_infrasound or show_seismic:
         axes[-2,0].set_ylabel('Frequency (Hz)')
     if show_traces:
-        line_infrasound, = axes[-1,0].plot([], [], color = 'red', lw = 1)  # Setup line
-        line_seismic, = axes[-1,0].plot([], [], color = 'blue', lw = 1)  # Setup line
+        lines, y_baseline = set_up_line_plot(axes[-1,0], N_full, n_chan, ylim)
+        #line_infrasound, = axes[-1,0].plot([], [], color = 'red', lw = 1)  # Setup line
+        #line_seismic, = axes[-1,0].plot([], [], color = 'blue', lw = 1)  # Setup line
 
     #ax.set_ylim(-1, 1)  # Set limitation in y
     for j in range(len(axes)):
