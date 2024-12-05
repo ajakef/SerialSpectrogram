@@ -7,6 +7,7 @@ import itertools
 import numpy as np
 from scipy.signal import spectrogram
 from riversound import image
+from utils import parse_line, baud_rate
 
 sensitivity_infrasound = 0.01/125 * 3.2/12
 sensitivity_seismic = 30 # V/m/s; probably order-of-magnitude accurate.
@@ -18,6 +19,7 @@ bitweight_seismic = bitweight_V/gain_seismic/sensitivity_seismic * 1e3 # um/s
 
 N_full = 4096
 N_sub = 128
+n_chan = 2
 overlap = 0.875
 dt = 0.005
 
@@ -28,12 +30,14 @@ show_traces = True
 def data_gen_serial(): # this function must be iterable; every time it yields, what it yields is the input to run()
     infrasound = np.zeros(N_full) 
     seismic = np.zeros(N_full)
+    filtered_data = np.zeros([n_chan, N_full])
+    raw_data = np.zeros([n_chan, N_full])
     print('startup')
     try:
-        ser = serial.Serial('/dev/ttyUSB0', 115200, timeout=20)  # Open port and read data.
+        ser = serial.Serial('/dev/ttyUSB0', baud_rate, timeout=20)  # Open port and read data.
     except:
         try:
-            ser = serial.Serial('/dev/ttyUSB1', 115200, timeout=20)  # Open port and read data.
+            ser = serial.Serial('/dev/ttyUSB1', baud_rate, timeout=20)  # Open port and read data.
         except:
             raise(Exception('Could not open ttyUSB0 or ttyUSB1. Please confirm that pySerial is installed and device is plugged in.'))
             
@@ -44,11 +48,9 @@ def data_gen_serial(): # this function must be iterable; every time it yields, w
 
     while True:
         for i in range(N_full):
-            line = ser.readline().decode('utf-8').strip().split(',')
-            infrasound[i] = float(line[-1]) * bitweight_infrasound
-            seismic[i] = float(line[-2]) * bitweight_seismic
+            filtered_data, raw_data = parse_line(ser, filtered_data, raw_data, n_chan, i) 
             if (i % N_sub) == 0:
-                yield [infrasound, seismic, i]
+                yield [filtered_data[0,:], filtered_data[1,:], i]
         
 def run(data): # this function accepts the "yields" of the data_gen function as its input, and must return a list of all artists (i.e., images and lines). If some feature in the plot isn't updating right, it may not be included in the returned list. note that axis.plot() returns a list of (typically 1) artists, not an artist itself. Seems like storing info in globals isn't an option.
     artists = []

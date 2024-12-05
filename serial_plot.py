@@ -5,40 +5,27 @@ import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 import itertools
 import numpy as np
-
-sensitivity_infrasound = 0.01/125 * 3.2/12
-sensitivity_seismic = 30 # V/m/s; probably order-of-magnitude accurate.
-bitweight_V = 5/2**24 # differential measurement can go up to +/- 2.5V
-gain_infrasound = 128
-gain_seismic = 32
-bitweight_infrasound = bitweight_V/gain_infrasound/sensitivity_infrasound
-bitweight_seismic = bitweight_V/gain_seismic/sensitivity_seismic * 1e3 # um/s
-
+from utils import parse_line, baud_rate
 
 def data_gen_serial():
     try:
-        ser = serial.Serial('/dev/ttyUSB0', 115200, timeout=1)  # Open port and read data.
+        ser = serial.Serial('/dev/ttyUSB0', baud_rate, timeout=1)  # Open port and read data.
     except:
         try:
-            ser = serial.Serial('/dev/ttyUSB1', 115200, timeout=1)  # Open port and read data.
+            ser = serial.Serial('/dev/ttyUSB1', baud_rate, timeout=1)  # Open port and read data.
         except:
             print('Could not open either ttyUSB0 or ttyUSB1. Please confirm that pySerial is installed and device is plugged in')
     ser.reset_input_buffer()  # Flush input buffer, discarding all its contents.
     for i in range(50):
         print(ser.readline())
 
-    data1 = np.zeros(N_full)
-    data2 = np.zeros(N_full)
+    raw_data = np.zeros((n_chan, N_full))
+    filtered_data = np.zeros((n_chan, N_full))
     while True:
         for i in range(N_full):
-            line = ser.readline().decode('utf-8').strip().split(',')
-            data1[i] = float(line[-1]) * bitweight_infrasound
-            data2[i] = float(line[-2]) * bitweight_seismic
+            filtered_data, raw_data = parse_line(ser, filtered_data, raw_data, n_chan, i) 
             if (i % N_sub) == 0:
-                if n_chan == 1:
-                    yield [data1]
-                elif n_chan == 2:
-                    yield [data1, data2]
+                yield [filtered_data[j,:] for j in range(n_chan)]
 
 def data_gen_no_serial():
     while True:
