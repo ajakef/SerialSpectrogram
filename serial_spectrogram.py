@@ -17,7 +17,11 @@ gain_seismic = 32
 bitweight_infrasound = bitweight_V/gain_infrasound/sensitivity_infrasound
 bitweight_seismic = bitweight_V/gain_seismic/sensitivity_seismic * 1e3 # um/s
 
+seismic_plot_gain = 3
+#seismic_plot_gain = 100
+
 N_full = 4096
+#N_full = 1024
 N_sub = 128
 n_chan = 4
 overlap = 0.875
@@ -54,20 +58,21 @@ def data_gen_serial(): # this function must be iterable; every time it yields, w
                 yield [filtered_data[j,:] for j in range(n_chan)] + [i]
         
 def run(data): # this function accepts the "yields" of the data_gen function as its input, and must return a list of all artists (i.e., images and lines). If some feature in the plot isn't updating right, it may not be included in the returned list. note that axis.plot() returns a list of (typically 1) artists, not an artist itself. Seems like storing info in globals isn't an option.
+    eps = np.random.normal(0, 1e-9, N_full)
     artists = []
     nplots = show_seismic+show_infrasound+show_traces
     current_time = data[-1] * dt
     freqticks = [1, 3, 10, 30, 100]
     if show_infrasound:
         plt.subplot(nplots, 1, 1)
-        freqs, times, sg = spectrogram(data[0], fs = 200, window = 'hamming', nperseg = N_sub, noverlap = overlap*N_sub, detrend = 'linear')#, axis = axes[0]) axis input doesn't work for some reason
+        freqs, times, sg = spectrogram(data[0]+eps, fs = 200, window = 'hamming', nperseg = N_sub, noverlap = overlap*N_sub, detrend = 'linear')#, axis = axes[0]) axis input doesn't work for some reason
         sg[sg == 0] = np.nan # prevent warnings when taking log(0)
         artists.append(image(np.log(sg.T[:,1:]), times, freqs[1:], log_y = True, ax = axes[0,0]))
         artists.append(axes[0,0].plot([current_time, current_time], axes[0,0].get_ylim(), 'k-')[0]) # axes[0,0].plot returns a list of artists, not just one
         axes[0,0].set_yticks(np.log10(freqticks), freqticks)
     if show_seismic:
         plt.subplot(nplots, 1, 1+show_infrasound)
-        freqs, times, sg = spectrogram(data[1], fs = 200, window = 'hamming', nperseg = N_sub, noverlap = 0.5*N_sub, detrend = 'linear')#, axis = axes[0]) axis input doesn't work for some reason
+        freqs, times, sg = spectrogram(data[1]+eps, fs = 200, window = 'hamming', nperseg = N_sub, noverlap = 0.5*N_sub, detrend = 'linear')#, axis = axes[0]) axis input doesn't work for some reason
         sg[sg == 0] = np.nan
         artists.append(image(np.log(sg.T[:,1:]), times, freqs[1:], log_y = True, ax = axes[show_infrasound+0,0]))
         artists.append(axes[show_infrasound+0,0].plot([current_time, current_time], axes[0,0].get_ylim(), 'k-')[0]) # axes[0,0].plot returns a list of artists, not just one
@@ -76,11 +81,11 @@ def run(data): # this function accepts the "yields" of the data_gen function as 
         plt.subplot(nplots, 1, nplots)
         t = np.arange(N_full) * dt
         if show_infrasound:
-            lines[0].set_data(t, data[0] - data[0][0]+y_baseline[0])
+            lines[0].set_data(t, data[0] - data[0][0]+y_baseline[0]+eps)
             artists.append(lines[0])
         if show_seismic:
             for i in range(1, n_chan):
-                lines[i].set_data(t, data[i] - data[i][0]+y_baseline[i])
+                lines[i].set_data(t, seismic_plot_gain*(data[i] - data[i][0]+eps)+y_baseline[i])
                 artists.append(lines[i])
         axes[-1,0].set_ylim(np.min(ylim), np.max(ylim))
         artists.append(axes[-1,0].plot([current_time, current_time], [-1,1], 'k-')[0])
