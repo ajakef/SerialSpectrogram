@@ -39,10 +39,10 @@ def data_gen_serial(): # this function must be iterable; every time it yields, w
     raw_data = np.zeros([n_chan, N_full])
     print('startup')
     try:
-        ser = serial.Serial('/dev/ttyUSB0', baud_rate, timeout=20)  # Open port and read data.
+        ser = serial.Serial('/dev/ttyUSB0', baud_rate, timeout=2)  # Open port and read data.
     except:
         try:
-            ser = serial.Serial('/dev/ttyUSB1', baud_rate, timeout=20)  # Open port and read data.
+            ser = serial.Serial('/dev/ttyUSB1', baud_rate, timeout=2)  # Open port and read data.
         except:
             raise(Exception('Could not open ttyUSB0 or ttyUSB1. Please confirm that pySerial is installed and device is plugged in.'))
             

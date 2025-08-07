@@ -20,7 +20,7 @@ def parse_line(ser, filtered_data, raw_data, n_chan, i):
     bitweights = [bitweight_infrasound] + [bitweight_seismic for i in range(n_chan - 1)]
     while True:
         try:
-            line = ser.readline().decode('utf-8').strip().split(',')
+            line = ser.readline().decode('utf-8', errors = 'ignore').strip().split(',')
             float(line[0]) # raises an exception if the first character isn't numeric
             raw_data[:,i] = np.array([float(line[j+1]) * bitweights[j] for j in range(n_chan)]) + raw_data[:,i-1] # integrate it before filtering
             filtered_data[:,i] = -a[1] * filtered_data[:,i-1] + b[0] * raw_data[:,i] + b[1] * raw_data[:,i-1]
