@@ -44,10 +44,12 @@ def data_gen_serial(): # this function must be iterable; every time it yields, w
             ser = serial.Serial('/dev/ttyUSB1', baud_rate, timeout=2)  # Open port and read data.
         except:
             raise(Exception('Could not open ttyUSB0 or ttyUSB1. Please confirm that pySerial is installed and device is plugged in.'))
-            
+
     ser.reset_input_buffer()  # Flush input buffer, discarding all its contents.
     for i in range(100):
         line = ser.readline()
+        if line == b'Enter Serial Number\r\n':
+            ser.write(b'NCM\r\n') # command for "no compression"
         #print(line)
 
     while True:
