@@ -11,4 +11,4 @@ conda activate serialspectrogram
 git clone https://github.com/ajakef/SerialSpectrogram/
 ```
 
-* Then, change directory into the `SerialSpectrogram/` folder and run `./serial_spectrogram.py`. 
+* Then, change directory into the `SerialSpectrogram/` folder and run `./serial_spectrogram.py`. It will probably have to restart a few times before it begins plotting. You may have to create a CONFIG.TXT file on the microSD card telling it to run all 4 channels. 
