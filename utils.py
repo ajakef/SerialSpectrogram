@@ -1,5 +1,6 @@
 import numpy as np
 import scipy.signal
+import matplotlib.pyplot as plt
 
 sensitivity_infrasound = 0.01/125 * 3.2/12 # V/Pa
 sensitivity_seismic = 30 # V/m/s; probably order-of-magnitude accurate.
@@ -49,3 +50,72 @@ def set_up_line_plot(ax, N_full, n_chan, ylim):
         ax.text(0, y_baseline[i] + text_offset, labels[i])
 
     return lines, y_baseline
+
+def image(Z, x = None, y = None, aspect = 'equal', zmin = None, zmax = None, ax = plt, crosshairs=False, log_x = False, log_y = False, qmin = 0.02, qmax = 0.98):
+    # Z rows are x, columns are y
+    if x is None:
+        x = np.arange(Z.shape[0])
+    if y is None:
+        y = np.arange(Z.shape[1])
+
+
+    if log_x:
+        w = x > 0
+        plot_x = np.log10(x[w])
+        x = x[w]
+        Z = Z[:,w]
+    else:
+        plot_x = x
+
+    if log_y:
+        w = y > 0
+        plot_y = np.log10(y[w])
+        y = y[w]
+        Z = Z[:,w]
+    else:
+        plot_y = y
+        
+    # zmin/zmax are the color axis limits. if not set by user, use the 2% and 98% percentiles
+    # this prevents outliers from dominating the dataset
+    if zmin is None:
+        ZZ = Z[:]
+        wz = ~np.isinf(ZZ) & ~np.isnan(ZZ)
+        zmin = np.quantile(ZZ[wz], qmin)
+    if zmax is None:
+        ZZ = Z[:]
+        wz = ~np.isinf(ZZ) & ~np.isnan(ZZ)
+        zmax = np.quantile(Z[wz], qmax)
+
+    im = ax.pcolormesh(plot_x, plot_y, Z.T[1:,1:], vmin = zmin, vmax = zmax, shading = 'auto')#, cmap='YlOrRd')
+    if crosshairs:
+        ax.hlines(0, x[0], x[-1], 'k', linewidth=0.5)
+        ax.vlines(0, y[0], y[-1], 'k', linewidth=0.5)
+    if log_x:
+        if ax is plt:
+            xt = round_sig(10**plt.xticks()[0],0)
+            xt = xt[(np.log10(xt) > plt.xlim()[0]) & (np.log10(xt) < plt.xlim()[1])]
+            plt.xticks(np.log10(xt), xt)
+        else:
+            xt = round_sig(10**ax.get_xticks(),0)
+            xt = xt[(np.log10(xt) > ax.get_xlim()[0]) & (np.log10(xt) < ax.get_xlim()[1])]
+            ax.set_xticks(np.log10(xt), xt)
+            
+    if log_y:
+        if ax is plt:
+            yt = round_sig(10**plt.yticks()[0],0)
+            yt = yt[(np.log10(yt) > plt.ylim()[0]) & (np.log10(yt) < plt.ylim()[1])]
+            plt.yticks(np.log10(yt), yt)
+        else:
+            yt = round_sig(10**ax.get_yticks(),0)
+            yt = yt[(np.log10(yt) > ax.get_ylim()[0]) & (np.log10(yt) < ax.get_ylim()[1])]
+            ax.set_yticks(np.log10(yt), yt)
+    return im
+
+def round_sig(f, p): # thanks StackOverflow denizb
+    ## function to put a list of numbers in scientific notation
+    ## f: list of numbers
+    ## p: number of decimal places
+    f = np.array(f)
+    return np.array([float(('%.' + str(p) + 'e') % ff) for ff in f])
+
+    

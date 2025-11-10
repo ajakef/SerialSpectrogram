@@ -6,8 +6,7 @@ import matplotlib.animation as animation
 import itertools
 import numpy as np
 from scipy.signal import spectrogram
-from riversound import image
-from utils import parse_line, baud_rate, set_up_line_plot
+from utils import parse_line, baud_rate, set_up_line_plot, image
 
 sensitivity_infrasound = 0.01/125 * 3.2/12
 sensitivity_seismic = 30 # V/m/s; probably order-of-magnitude accurate.
