@@ -1,4 +1,4 @@
-#!/home/jake/anaconda3/envs/gem/bin/python
+#!/usr/bin/env python3
 import time
 import serial
 import matplotlib.pyplot as plt
