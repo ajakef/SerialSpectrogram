@@ -7,8 +7,13 @@ conda create -y -n serialspectrogram python=3.10 numpy obspy matplotlib scipy py
 
 * Next, from the right project folder, clone the github repository.
 ```
-conda activate serialspectrogram
 git clone https://github.com/ajakef/SerialSpectrogram/
 ```
 
-* Then, change directory into the `SerialSpectrogram/` folder and run `./serial_spectrogram.py`. It will probably have to restart a few times before it begins plotting. You may have to create a CONFIG.TXT file on the microSD card telling it to run all 4 channels. 
+* Then, activate the conda environment and, from that folder, run the code.
+```
+conda activate serialspectrogram
+cd SerialSpectrogram
+./serial_spectrogram.py
+```
+* It will probably have to restart a few times before it begins plotting. You may have to create a CONFIG.TXT file on the microSD card telling it to run all 4 channels. 
