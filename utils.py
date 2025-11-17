@@ -1,6 +1,8 @@
 import numpy as np
 import scipy.signal
 import matplotlib.pyplot as plt
+import glob
+import serial
 
 sensitivity_infrasound = 0.01/125 * 3.2/12 # V/Pa
 sensitivity_seismic = 30 # V/m/s; probably order-of-magnitude accurate.
@@ -16,7 +18,30 @@ dt = 0.005
 corner_freq = 1 # Hz
 nyquist = 0.5/dt
 [b, a] = scipy.signal.butter(1, corner_freq/nyquist, 'highpass')
-    
+
+def get_serial():
+    port_list = sorted(glob.glob('/dev/ttyUSB*') + # linux serial ports
+                       glob.glob('/dev/tty.usbserial*')) # mac serial ports
+    print(port_list)
+    for port in port_list:
+        print(port)
+        try:
+            ser = serial.Serial(port, baud_rate, timeout=2)  # Open port and read data.
+        except Exception as e:
+            print(e)
+            print(f'failed to open {port}')
+            continue
+        else:
+            print(f'opened {port}')
+            break
+    else:
+        raise(Exception('Could not open ttyUSB0 or ttyUSB1. Please confirm that pySerial is installed and device is plugged in.'))
+    return ser
+
+
+
+
+        
 def parse_line(ser, filtered_data, raw_data, n_chan, i):
     bitweights = [bitweight_infrasound] + [bitweight_seismic for i in range(n_chan - 1)]
     while True:

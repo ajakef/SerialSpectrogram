@@ -6,7 +6,7 @@ import matplotlib.animation as animation
 import itertools
 import numpy as np
 from scipy.signal import spectrogram
-from utils import parse_line, baud_rate, set_up_line_plot, image
+from utils import get_serial, parse_line, baud_rate, set_up_line_plot, image
 
 sensitivity_infrasound = 0.01/125 * 3.2/12
 sensitivity_seismic = 30 # V/m/s; probably order-of-magnitude accurate.
@@ -37,13 +37,14 @@ def data_gen_serial(): # this function must be iterable; every time it yields, w
     filtered_data = np.zeros([n_chan, N_full])
     raw_data = np.zeros([n_chan, N_full])
     print('startup')
-    try:
-        ser = serial.Serial('/dev/ttyUSB0', baud_rate, timeout=2)  # Open port and read data.
-    except:
-        try:
-            ser = serial.Serial('/dev/ttyUSB1', baud_rate, timeout=2)  # Open port and read data.
-        except:
-            raise(Exception('Could not open ttyUSB0 or ttyUSB1. Please confirm that pySerial is installed and device is plugged in.'))
+    #try:
+    #    ser = serial.Serial('/dev/ttyUSB0', baud_rate, timeout=2)  # Open port and read data.
+    #except:
+    #    try:
+    #        ser = serial.Serial('/dev/ttyUSB1', baud_rate, timeout=2)  # Open port and read data.
+    #    except:
+    #        raise(Exception('Could not open ttyUSB0 or ttyUSB1. Please confirm that pySerial is installed and device is plugged in.'))
+    ser = get_serial()
 
     ser.reset_input_buffer()  # Flush input buffer, discarding all its contents.
     for i in range(100):
