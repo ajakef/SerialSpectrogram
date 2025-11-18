@@ -16,7 +16,8 @@ gain_seismic = 32
 bitweight_infrasound = bitweight_V/gain_infrasound/sensitivity_infrasound
 bitweight_seismic = bitweight_V/gain_seismic/sensitivity_seismic * 1e3 # um/s
 
-seismic_plot_gain = 3
+seismic_plot_gain = 1
+infrasound_plot_gain = -0.125
 #seismic_plot_gain = 100
 
 N_full = 4096
@@ -84,7 +85,7 @@ def run(data): # this function accepts the "yields" of the data_gen function as 
         plt.subplot(nplots, 1, nplots)
         t = np.arange(N_full) * dt
         if show_infrasound:
-            lines[0].set_data(t, data[0] - data[0][0]+y_baseline[0]+eps)
+            lines[0].set_data(t, infrasound_plot_gain(data[0] - data[0][0]+y_baseline[0]+eps)
             artists.append(lines[0])
         if show_seismic:
             for i in range(1, n_chan):
