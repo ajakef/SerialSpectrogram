@@ -51,6 +51,7 @@ def data_gen_serial(): # this function must be iterable; every time it yields, w
         line = ser.readline()
         if line == b'Enter Serial Number\r\n':
             ser.write(b'NCM\r\n') # command for "no compression"
+            ser.write(b'GN:128,32,32,32\r\n') # standard gains
         #print(line)
 
     while True:
